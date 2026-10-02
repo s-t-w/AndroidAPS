@@ -80,7 +80,7 @@ jobs:
           # 2. Check if the combined KEYSTORE_SET is being used
           if [ -n "$INPUT_KEYSTORE_SET" ]; then
             echo "🔐 Decoding KEYSTORE_SET..."
-            
+          
             # Critical: We reference $INPUT_KEYSTORE_SET (not ${{ }}) 
             # to prevent Bash from trying to execute raw special characters.
             DECODED=$(echo "$INPUT_KEYSTORE_SET" | base64 -d)
@@ -273,17 +273,17 @@ jobs:
 
       - name: Build APKs
         run: |
-              ./gradlew :app:assemble${{ env.BUILD_VARIANT }} :wear:assemble${{ env.BUILD_VARIANT }} \
-              -Dorg.gradle.jvmargs="-Xmx8g -XX:+UseParallelGC -Xss1024m" \
-              -Dkotlin.daemon.jvm.options="-Xmx2g" \
-              -Dkotlin.compiler.execution.strategy="in-process" \
-              -Dorg.gradle.daemon=true \
-              -Dorg.gradle.workers.max=8 \
-              -Dorg.gradle.caching=true \
-              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/keystore/keystore.jks" \
-              -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
-              -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          ./gradlew :app:assemble${{ env.BUILD_VARIANT }} :wear:assemble${{ env.BUILD_VARIANT }} \
+          -Dorg.gradle.jvmargs="-Xmx8g -XX:+UseParallelGC -Xss1024m" \
+          -Dkotlin.daemon.jvm.options="-Xmx2g" \
+          -Dkotlin.compiler.execution.strategy="in-process" \
+          -Dorg.gradle.daemon=true \
+          -Dorg.gradle.workers.max=8 \
+          -Dorg.gradle.caching=true \
+          -Pandroid.injected.signing.store.file="$RUNNER_TEMP/keystore/keystore.jks" \
+          -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+          -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+          -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
       - name: Rename APKs with version
         run: |
