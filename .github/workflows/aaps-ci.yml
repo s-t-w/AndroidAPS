@@ -64,10 +64,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Decode Secrets Keystore Set and Oauth2 to Env
+        env:
+          # Securely map all potential secrets as environment variables first.
+          # GitHub automatically sanitizes and protects all special characters here.
+          INPUT_KEYSTORE_SET: ${{ secrets.KEYSTORE_SET }}
+          INPUT_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          INPUT_STORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          INPUT_ALIAS: ${{ secrets.KEY_ALIAS }}
+          INPUT_KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+          INPUT_GDRIVE: ${{ secrets.GDRIVE_OAUTH2 }}
         run: |
-          if [ -n "${{ secrets.KEYSTORE_SET }}" ]; then
+          # 1. Export Google Drive token
+          echo "GDRIVE_OAUTH2=$INPUT_GDRIVE" >> $GITHUB_ENV
+
+          # 2. Check if the combined KEYSTORE_SET is being used
+          if [ -n "$INPUT_KEYSTORE_SET" ]; then
             echo "🔐 Decoding KEYSTORE_SET..."
-            DECODED=$(echo "${{ secrets.KEYSTORE_SET }}" | base64 -d)
+            
+            # Critical: We reference $INPUT_KEYSTORE_SET (not ${{ }}) 
+            # to prevent Bash from trying to execute raw special characters.
+            DECODED=$(echo "$INPUT_KEYSTORE_SET" | base64 -d)
 
             KEYSTORE_BASE64=$(echo "$DECODED" | cut -d'|' -f1)
             KEYSTORE_PASSWORD=$(echo "$DECODED" | cut -d'|' -f2)
@@ -86,13 +102,15 @@ jobs:
 
             echo "✅ Keystore parameters extracted from KEYSTORE_SET"
           else
+            # 3. Fallback to using individual split secrets
             echo "ℹ️ KEYSTORE_SET not provided, using separate secrets."
-            echo "KEYSTORE_BASE64=${{ secrets.KEYSTORE_BASE64 }}" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEYSTORE_BASE64=$INPUT_BASE64" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=$INPUT_STORE_PASS" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$INPUT_ALIAS" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$INPUT_KEY_PASS" >> $GITHUB_ENV
+            echo "✅ Separate secrets exported successfully."
           fi
-          echo "GDRIVE_OAUTH2=${{ secrets.GDRIVE_OAUTH2 }}" >> $GITHUB_ENV
+
 
       - name: Check Secrets
         run: |
